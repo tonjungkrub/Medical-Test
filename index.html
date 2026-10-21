@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- Prevents zooming and locks scaling for a native app feel -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Pharma Heads Up</title>
     <style>
@@ -33,7 +32,6 @@
             box-sizing: border-box;
         }
 
-        /* Show start screen by default */
         #start-screen { display: flex; }
 
         h1 { font-size: 3rem; margin-bottom: 10px; }
@@ -55,7 +53,6 @@
 
         button:active { transform: translateY(4px); box-shadow: none; }
 
-        /* Fallback tap zones just in case gyro is locked */
         .tap-zones {
             position: absolute;
             bottom: 20px;
@@ -75,8 +72,7 @@
     <!-- START SCREEN -->
     <div id="start-screen">
         <h1>Pharma Charades</h1>
-        <p class="instructions">Hold iPad to your forehead in Landscape.<br>Tilt DOWN = Correct (+1)<br>Tilt UP = Pass</p>
-        <!-- This button acts as the required user gesture to request iOS sensor permissions -->
+        <p class="instructions">Hold iPad upright on your forehead.<br>Tilt DOWN &gt; 30° = Correct<br>Tilt UP &gt; 30° = Pass<br>Return to upright to show next word.</p>
         <button onclick="requestSensorPermission()">START GAME</button>
     </div>
 
@@ -98,7 +94,6 @@
     </div>
 
     <script>
-        // Your custom pharmacology word list
         const words = [
             "Chloramphenicol",
             "Methotrexate",
@@ -113,9 +108,10 @@
         let score = 0;
         let timeLeft = 60;
         let timerInterval;
-        let isProcessingTilt = false; // Prevents rapid double-triggering
+        
+        let isProcessingTilt = false; 
+        let waitingForReset = false; // Requires returning to the +/- 30 deg zone to unlock the next guess
 
-        // iOS 13+ requires explicit permission to access the gyroscope
         function requestSensorPermission() {
             if (typeof DeviceOrientationEvent.requestPermission === 'function') {
                 DeviceOrientationEvent.requestPermission()
@@ -124,13 +120,12 @@
                             window.addEventListener('deviceorientation', handleOrientation);
                             startGame();
                         } else {
-                            alert("Gyroscope permission denied. You can use the tap buttons at the bottom to play.");
+                            alert("Gyroscope permission denied. You can use the tap buttons.");
                             startGame();
                         }
                     })
                     .catch(console.error);
             } else {
-                // Non-iOS 13+ devices
                 window.addEventListener('deviceorientation', handleOrientation);
                 startGame();
             }
@@ -140,16 +135,16 @@
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('end-screen').style.display = 'none';
             document.getElementById('game-screen').style.display = 'flex';
-            document.body.style.backgroundColor = '#3498db'; // Standard playing color
+            document.body.style.backgroundColor = '#3498db';
 
             score = 0;
             timeLeft = 60;
+            isProcessingTilt = false;
+            waitingForReset = false;
             document.getElementById('time-left').innerText = timeLeft;
             
-            // Shuffle the word list
             shuffledWords = [...words].sort(() => Math.random() - 0.5);
             currentWordIndex = 0;
-            
             showNextWord();
 
             timerInterval = setInterval(() => {
@@ -163,7 +158,6 @@
 
         function showNextWord() {
             if (currentWordIndex >= shuffledWords.length) {
-                // Reshuffle and loop if they run out of words
                 shuffledWords = [...words].sort(() => Math.random() - 0.5);
                 currentWordIndex = 0;
             }
@@ -171,19 +165,31 @@
         }
 
         function handleOrientation(event) {
-            if (isProcessingTilt || timeLeft <= 0 || document.getElementById('game-screen').style.display === 'none') return;
+            if (timeLeft <= 0 || document.getElementById('game-screen').style.display === 'none') return;
 
-            // beta represents the front-to-back tilt in degrees [-180, 180]
-            // gamma represents left-to-right tilt. 
-            // When holding an iPad in landscape against the forehead, beta is usually around 80-100 (upright).
             let tilt = event.beta; 
+            let upright = 90; // 90 degrees is perfectly vertical
+            let threshold = 30; // The +/- 30 degree buffer zone
 
-            // Tilt Down (Face towards floor) -> Correct
-            if (tilt > 130 && tilt < 180) {
-                handleCorrect();
+            let isNormalZone = (tilt > upright - threshold) && (tilt < upright + threshold); // 60 to 120 degrees
+            let isDown = tilt >= upright + threshold; // 120 degrees or more (face towards floor)
+            let isUp = tilt <= upright - threshold && tilt > 0; // 60 degrees or less (face towards ceiling)
+
+            // If the iPad returns to the upright position, reset the lock so they can guess again
+            if (isNormalZone) {
+                waitingForReset = false;
+                if (!isProcessingTilt) {
+                    document.body.style.backgroundColor = '#3498db'; // Return to blue
+                }
             }
-            // Tilt Up (Face towards ceiling) -> Pass
-            else if (tilt < 45 && tilt > -90) {
+
+            // Do nothing if we are in the middle of a 1.2s animation OR if the player hasn't returned the iPad upright yet
+            if (isProcessingTilt || waitingForReset) return;
+
+            // Trigger guesses only if we have a clean reset
+            if (isDown) {
+                handleCorrect();
+            } else if (isUp) {
                 handleSkip();
             }
         }
@@ -191,32 +197,31 @@
         function handleCorrect() {
             if (isProcessingTilt) return;
             isProcessingTilt = true;
+            waitingForReset = true; // Lock further guesses until iPad goes back to vertical
             score++;
             
-            // Flash Green for Correct
             document.body.style.backgroundColor = '#2ecc71';
             document.getElementById('current-word').innerText = "CORRECT!";
             
             setTimeout(() => {
                 currentWordIndex++;
                 showNextWord();
-                document.body.style.backgroundColor = '#3498db';
                 isProcessingTilt = false;
+                // Note: The screen stays green until they bring it back to vertical, which provides good visual feedback
             }, 1200);
         }
 
         function handleSkip() {
             if (isProcessingTilt) return;
             isProcessingTilt = true;
+            waitingForReset = true; // Lock further guesses until iPad goes back to vertical
             
-            // Flash Red for Pass
             document.body.style.backgroundColor = '#e74c3c';
             document.getElementById('current-word').innerText = "PASS";
             
             setTimeout(() => {
                 currentWordIndex++;
                 showNextWord();
-                document.body.style.backgroundColor = '#3498db';
                 isProcessingTilt = false;
             }, 1200);
         }
