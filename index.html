@@ -1,244 +1,415 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pharma Heads Up</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: system-ui, -apple-system, sans-serif;
-            background-color: #2c3e50;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-            transition: background-color 0.3s;
-            text-align: center;
-        }
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="dark"><style>html{color-scheme:dark}body{margin:0}</style>
+<title>Chayen</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=DM+Sans:wght@400;500;700&display=swap">
+<style>
+/* Layout: one-screen app. Home = controls left, word list right. Play = giant word on tea-orange, tap bars at the foot. */
+:root{
+  --tea:#f27a1e;        /* Thai tea orange, the play surface */
+  --brew:#1d0e07;       /* dark brew, the app ground */
+  --brew-2:#2c170d;     /* raised panels */
+  --milk:#fff3e3;       /* condensed milk, text on dark */
+  --ice:#8fd3d0;        /* ice-cube teal, small accents */
+  --good:#27b56a;
+  --skip:#7d2a18;
+  --display:"Bricolage Grotesque","Avenir Next","Helvetica Neue",Arial,sans-serif;
+  --body:"DM Sans","Avenir Next","Helvetica Neue",Arial,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;background:var(--brew);color:var(--milk);font-family:var(--body);font-size:16px;line-height:1.45;
+  padding-block:0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;overflow:hidden;
+}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:focus-visible,textarea:focus-visible{outline:3px solid var(--ice);outline-offset:3px}
+.screen{height:100%;display:flex;flex-direction:column}
+.screen[hidden]{display:none}
 
-        #start-screen, #game-screen, #end-screen {
-            display: none;
-            width: 100%;
-            height: 100%;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            box-sizing: border-box;
-        }
+/* Home */
+.home{overflow-y:auto;padding-block:20px 24px;-webkit-overflow-scrolling:touch}
+.home-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;max-width:1100px;width:100%;margin:0 auto;align-items:start}
+@media (max-width:760px){.home-grid{grid-template-columns:minmax(0,1fr)}}
+.brand{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(48px,9vw,92px);line-height:.95;margin:0;letter-spacing:-.02em;text-wrap:balance}
+.thai{font-family:"Sukhumvit Set","Thonburi",var(--body);font-size:clamp(20px,3vw,30px);color:var(--tea)}
+.lede{max-width:46ch;margin:14px 0 22px;color:#e9d3bd}
+h2{font-family:var(--display);font-weight:800;font-size:15px;letter-spacing:.12em;text-transform:uppercase;color:var(--tea);margin:0 0 10px}
+.panel{background:var(--brew-2);border-radius:14px;padding:18px}
+.stack{display:flex;flex-direction:column;gap:18px}
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg button{flex:1 1 0;min-width:84px;padding:12px 10px;border-radius:10px;background:#3b2113;font-weight:700;font-variant-numeric:tabular-nums;border:2px solid transparent}
+.seg button[aria-pressed="true"]{background:var(--tea);color:var(--brew)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{padding:14px 22px;border-radius:12px;font-weight:700;background:#3b2113}
+.btn.primary{background:var(--tea);color:var(--brew);font-family:var(--display);font-weight:800;font-size:22px;padding:16px 28px}
+.btn.small{padding:8px 12px;font-size:14px;border-radius:9px}
+.btn:active{transform:translateY(1px)}
+textarea{width:100%;min-height:260px;resize:vertical;background:#150a04;color:var(--milk);border:2px solid #3b2113;border-radius:10px;padding:12px;font:500 17px/1.5 var(--body);-webkit-user-select:text;user-select:text}
+.hint{font-size:14px;color:#cdb59c;margin:8px 0 0}
+.status{font-size:14px;color:var(--ice);min-height:1.4em}
+.help{font-size:14px;color:#cdb59c}
+.help b{color:var(--milk)}
 
-        #start-screen { display: flex; }
+/* Setup / calibrate */
+.center{align-items:center;justify-content:center;text-align:center;gap:18px;padding-block:24px}
+.center h2{font-size:18px}
+.big-line{font-family:var(--display);font-weight:800;font-size:clamp(30px,6vw,64px);line-height:1.05;max-width:18ch;margin:0;text-wrap:balance}
+.sub{max-width:44ch;color:#e9d3bd;margin:0}
 
-        h1 { font-size: 3rem; margin-bottom: 10px; }
-        .word-display { font-size: 6rem; font-weight: bold; margin: 20px 0; }
-        .timer { font-size: 2rem; position: absolute; top: 20px; right: 30px; font-weight: bold; }
-        .instructions { font-size: 1.5rem; margin-bottom: 40px; color: #bdc3c7; }
-        
-        button {
-            background-color: #f1c40f;
-            color: #2c3e50;
-            border: none;
-            padding: 20px 40px;
-            font-size: 2rem;
-            border-radius: 15px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-        }
+/* Play */
+.play{background:var(--tea);color:var(--brew);margin-inline:calc(-1 * max(16px,env(safe-area-inset-left,0px))) ;margin-right:calc(-1 * max(16px,env(safe-area-inset-right,0px)));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));transition:background-color .12s}
+.play.good{background:var(--good);color:#06240f}
+.play.skip{background:var(--skip);color:var(--milk)}
+.hud{display:flex;justify-content:space-between;align-items:center;padding-top:max(14px,env(safe-area-inset-top,0px));font-family:var(--display);font-weight:800}
+.hud .tag{font-size:13px;letter-spacing:.12em;text-transform:uppercase;opacity:.75;display:block;font-family:var(--body);font-weight:700}
+.hud .val{font-size:clamp(34px,6vw,56px);line-height:1;font-variant-numeric:tabular-nums}
+.hud .right{text-align:right}
+.hud .quit{opacity:.6;font:700 13px var(--body);letter-spacing:.1em;text-transform:uppercase;padding:10px 6px}
+.stage{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;min-height:0;overflow:hidden}
+.word{font-family:var(--display);font-weight:800;line-height:1;letter-spacing:-.02em;white-space:nowrap;display:inline-block}
+.word.msg{letter-spacing:.02em}
+.bar{height:6px;background:rgba(29,14,7,.2);border-radius:3px;overflow:hidden;margin-bottom:12px}
+.play.skip .bar{background:rgba(255,243,227,.25)}
+.bar i{display:block;height:100%;width:100%;background:currentColor;transform-origin:left;transform:scaleX(1)}
+.taps{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-bottom:max(14px,env(safe-area-inset-bottom,0px))}
+.taps button{padding:16px 10px;border-radius:12px;background:rgba(29,14,7,.16);font-weight:700;font-size:15px;letter-spacing:.04em}
+.play.skip .taps button{background:rgba(255,243,227,.16)}
+.taps small{display:block;font-weight:500;opacity:.75;letter-spacing:0}
 
-        button:active { transform: translateY(4px); box-shadow: none; }
+/* Results */
+.results{overflow-y:auto;padding-block:24px;-webkit-overflow-scrolling:touch}
+.res-wrap{max-width:900px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+.score{font-family:var(--display);font-weight:800;font-size:clamp(80px,22vw,190px);line-height:.9;color:var(--tea);font-variant-numeric:tabular-nums;margin:0}
+.lists{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+@media (max-width:620px){.lists{grid-template-columns:minmax(0,1fr)}}
+.lists ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.lists li{padding:9px 12px;border-radius:9px;background:#150a04;overflow-wrap:anywhere}
+.lists .ok li{border-left:5px solid var(--good)}
+.lists .no li{border-left:5px solid var(--skip);color:#cdb59c}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:max(18px,env(safe-area-inset-bottom,0px));background:var(--milk);color:var(--brew);padding:10px 16px;border-radius:10px;font-weight:700;z-index:20}
+.toast[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){.play{transition:none}}
+</style>
 
-        .tap-zones {
-            position: absolute;
-            bottom: 20px;
-            display: flex;
-            gap: 20px;
-            opacity: 0.3;
-        }
-        .tap-zones div {
-            padding: 10px 20px;
-            border: 2px solid white;
-            border-radius: 10px;
-        }
-    </style>
-</head>
-<body>
-
-    <!-- START SCREEN -->
-    <div id="start-screen">
-        <h1>Pharma Charades</h1>
-        <p class="instructions">Hold iPad upright on your forehead.<br>Tilt DOWN &gt; 30° = Correct<br>Tilt UP &gt; 30° = Pass<br>Return to upright to show next word.</p>
-        <button onclick="requestSensorPermission()">START GAME</button>
-    </div>
-
-    <!-- GAME SCREEN -->
-    <div id="game-screen">
-        <div class="timer" id="time-left">60</div>
-        <div class="word-display" id="current-word">Word</div>
-        <div class="tap-zones">
-            <div onclick="handleSkip()">Tap: Pass</div>
-            <div onclick="handleCorrect()">Tap: Correct</div>
+<main style="height:100%">
+  <!-- HOME -->
+  <section class="screen home" id="home">
+    <div class="home-grid">
+      <div class="stack">
+        <div>
+          <div class="brand"><h1>Chayen</h1><span class="thai" lang="th">ชาเย็น</span></div>
+          <p class="lede">Hold the iPad on your forehead. Your friends describe the word on screen without saying it. Tilt down when you get it, tilt up to skip.</p>
         </div>
+        <div class="panel">
+          <h2>Round length</h2>
+          <div class="seg" id="timerSeg" role="group" aria-label="Round length">
+            <button type="button" data-s="60" aria-pressed="false">60 s</button>
+            <button type="button" data-s="90" aria-pressed="true">90 s</button>
+            <button type="button" data-s="120" aria-pressed="false">120 s</button>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>Controls</h2>
+          <div class="row">
+            <button type="button" class="btn primary" id="startTilt">Start with tilt</button>
+            <button type="button" class="btn" id="startTap">Start with taps only</button>
+          </div>
+          <p class="status" id="motionStatus" aria-live="polite"></p>
+          <p class="help"><b>Tilt down</b> = correct (+1). <b>Tilt up</b> = skip. Tap bars at the bottom work too, for a partner or for testing.</p>
+        </div>
+        <div class="row">
+          <button type="button" class="btn small" id="soundBtn" aria-pressed="true">Sound: on</button>
+          <button type="button" class="btn small" id="recal">Recalibrate tilt</button>
+          <button type="button" class="btn small" id="dlBtn" hidden>Download game file</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Word list</h2>
+        <label for="words" class="hint" style="margin:0 0 8px;display:block">One word per line. Edit freely, it is saved on this device.</label>
+        <textarea id="words" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+        <div class="row" style="margin-top:10px;justify-content:space-between">
+          <span class="hint" id="count" style="margin:0"></span>
+          <button type="button" class="btn small" id="resetWords">Reset to starter words</button>
+        </div>
+      </div>
     </div>
+  </section>
 
-    <!-- END SCREEN -->
-    <div id="end-screen">
-        <h1>Time's Up!</h1>
-        <div class="word-display" id="final-score">Score: 0</div>
-        <button onclick="resetGame()">PLAY AGAIN</button>
+  <!-- CALIBRATE -->
+  <section class="screen center" id="calib" hidden>
+    <h2>Tilt setup</h2>
+    <p class="big-line" id="calibLine">Hold the iPad upright, like on your forehead.</p>
+    <p class="sub" id="calibSub">Keep it still for a moment.</p>
+    <button type="button" class="btn" id="calibCancel">Use taps instead</button>
+  </section>
+
+  <!-- PLAY -->
+  <section class="screen play" id="play" hidden>
+    <div class="hud">
+      <div><span class="tag">Score</span><span class="val" id="score">0</span></div>
+      <button type="button" class="quit" id="quit">End round</button>
+      <div class="right"><span class="tag">Time</span><span class="val" id="time">90</span></div>
     </div>
+    <div class="stage" id="stage"><span class="word" id="word"></span></div>
+    <div class="bar" aria-hidden="true"><i id="barFill"></i></div>
+    <div class="taps">
+      <button type="button" id="tapSkip">Skip<small>tilt up</small></button>
+      <button type="button" id="tapOk">Correct<small>tilt down</small></button>
+    </div>
+  </section>
 
-    <script>
-        const words = [
-            "Chloramphenicol",
-            "Methotrexate",
-            "Hydroxyurea",
-            "Febuxostat",
-            "6-Mercaptopurine",
-            "Probenecid"
-        ];
+  <!-- RESULTS -->
+  <section class="screen results" id="results" hidden>
+    <div class="res-wrap">
+      <div>
+        <h2>Time is up</h2>
+        <p class="score" id="finalScore">0</p>
+        <p class="sub" id="finalSub"></p>
+      </div>
+      <div class="row">
+        <button type="button" class="btn primary" id="again">Play again</button>
+        <button type="button" class="btn" id="toHome">Words and settings</button>
+      </div>
+      <div class="lists">
+        <div class="ok panel"><h2>Got it</h2><ul id="okList"></ul></div>
+        <div class="no panel"><h2>Skipped</h2><ul id="noList"></ul></div>
+      </div>
+    </div>
+  </section>
+  <div class="toast" id="toast" hidden></div>
+</main>
 
-        let shuffledWords = [];
-        let currentWordIndex = 0;
-        let score = 0;
-        let timeLeft = 60;
-        let timerInterval;
-        
-        let isProcessingTilt = false; 
-        let waitingForReset = false; // Requires returning to the +/- 30 deg zone to unlock the next guess
+<script>
+(function(){
+  var STARTER=["Chloramphenicol","Methotrexate","Hydroxyurea","Febuxostat","6-Mercaptopurine","Probenecid"];
+  var $=function(id){return document.getElementById(id)};
+  var S={seconds:90,sound:true,tilt:false,sign:0,neutral:0,z:0,gotMotion:false,words:[],deck:[],cur:"",score:0,ok:[],no:[],end:0,timerId:0,phase:"home",armed:false,armAt:0,flash:false};
 
-        function requestSensorPermission() {
-            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-                DeviceOrientationEvent.requestPermission()
-                    .then(permissionState => {
-                        if (permissionState === 'granted') {
-                            window.addEventListener('deviceorientation', handleOrientation);
-                            startGame();
-                        } else {
-                            alert("Gyroscope permission denied. You can use the tap buttons.");
-                            startGame();
-                        }
-                    })
-                    .catch(console.error);
-            } else {
-                window.addEventListener('deviceorientation', handleOrientation);
-                startGame();
-            }
-        }
+  function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
+  function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
 
-        function startGame() {
-            document.getElementById('start-screen').style.display = 'none';
-            document.getElementById('end-screen').style.display = 'none';
-            document.getElementById('game-screen').style.display = 'flex';
-            document.body.style.backgroundColor = '#3498db';
+  /* ---------- words ---------- */
+  var wordsEl=$("words");
+  function parseWords(){
+    var seen={},out=[];
+    wordsEl.value.split(/\r?\n/).forEach(function(l){var w=l.trim();if(w&&!seen[w.toLowerCase()]){seen[w.toLowerCase()]=1;out.push(w)}});
+    return out;
+  }
+  function updateCount(){var n=parseWords().length;$("count").textContent=n+(n===1?" word":" words")}
+  var saved=lsGet("chayen.words");
+  wordsEl.value=(saved&&saved.trim()?saved:STARTER.join("\n"));
+  updateCount();
+  wordsEl.addEventListener("input",function(){updateCount();lsSet("chayen.words",wordsEl.value)});
+  $("resetWords").onclick=function(){wordsEl.value=STARTER.join("\n");updateCount();lsSet("chayen.words",wordsEl.value);toast("Starter words restored")};
 
-            score = 0;
-            timeLeft = 60;
-            isProcessingTilt = false;
-            waitingForReset = false;
-            document.getElementById('time-left').innerText = timeLeft;
-            
-            shuffledWords = [...words].sort(() => Math.random() - 0.5);
-            currentWordIndex = 0;
-            showNextWord();
+  var savedSec=parseInt(lsGet("chayen.seconds"),10);
+  if([60,90,120].indexOf(savedSec)>-1)S.seconds=savedSec;
+  function paintSeg(){Array.prototype.forEach.call($("timerSeg").children,function(b){b.setAttribute("aria-pressed",String(parseInt(b.dataset.s,10)===S.seconds))})}
+  paintSeg();
+  $("timerSeg").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;S.seconds=parseInt(b.dataset.s,10);lsSet("chayen.seconds",String(S.seconds));paintSeg()});
 
-            timerInterval = setInterval(() => {
-                timeLeft--;
-                document.getElementById('time-left').innerText = timeLeft;
-                if (timeLeft <= 0) {
-                    endGame();
-                }
-            }, 1000);
-        }
+  var sg=lsGet("chayen.sign");if(sg==="1"||sg==="-1")S.sign=parseInt(sg,10);
 
-        function showNextWord() {
-            if (currentWordIndex >= shuffledWords.length) {
-                shuffledWords = [...words].sort(() => Math.random() - 0.5);
-                currentWordIndex = 0;
-            }
-            document.getElementById('current-word').innerText = shuffledWords[currentWordIndex];
-        }
+  function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+  function nextWord(){
+    if(!S.deck.length){S.deck=shuffle(S.words.slice());if(S.deck.length>1&&S.deck[S.deck.length-1]===S.cur){S.deck.unshift(S.deck.pop())}}
+    S.cur=S.deck.pop();
+    showWord(S.cur,false);
+  }
 
-        function handleOrientation(event) {
-            if (timeLeft <= 0 || document.getElementById('game-screen').style.display === 'none') return;
+  /* ---------- screens ---------- */
+  var screens=["home","calib","play","results"];
+  function show(name){S.phase=name;screens.forEach(function(s){$(s).hidden=(s!==name)})}
+  function toast(t){var el=$("toast");el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(function(){el.hidden=true},2200)}
 
-            let tilt = event.beta; 
-            let upright = 90; // 90 degrees is perfectly vertical
-            let threshold = 30; // The +/- 30 degree buffer zone
+  /* ---------- sound ---------- */
+  var ac=null;
+  function audio(){if(!ac){try{ac=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(ac&&ac.state==="suspended"){try{ac.resume()}catch(e){}}return ac}
+  function beep(f,d,t,type){if(!S.sound)return;var a=audio();if(!a)return;var o=a.createOscillator(),g=a.createGain(),s=a.currentTime+(t||0);o.type=type||"sine";o.frequency.value=f;g.gain.setValueAtTime(.0001,s);g.gain.exponentialRampToValueAtTime(.25,s+.02);g.gain.exponentialRampToValueAtTime(.0001,s+d);o.connect(g);g.connect(a.destination);o.start(s);o.stop(s+d+.05)}
+  var sfx={ok:function(){beep(660,.12,0);beep(880,.18,.11)},skip:function(){beep(240,.22,0,"triangle")},tick:function(){beep(520,.08,0)},go:function(){beep(900,.3,0)},end:function(){beep(500,.2,0);beep(400,.2,.2);beep(300,.45,.4)}};
+  $("soundBtn").onclick=function(){S.sound=!S.sound;this.setAttribute("aria-pressed",String(S.sound));this.textContent="Sound: "+(S.sound?"on":"off")};
 
-            let isNormalZone = (tilt > upright - threshold) && (tilt < upright + threshold); // 60 to 120 degrees
-            let isDown = tilt >= upright + threshold; // 120 degrees or more (face towards floor)
-            let isUp = tilt <= upright - threshold && tilt > 0; // 60 degrees or less (face towards ceiling)
+  /* ---------- motion ---------- */
+  function onMotion(e){var a=e.accelerationIncludingGravity;if(!a||a.z==null)return;S.z=a.z;S.gotMotion=true;if(S.phase==="play"&&S.tilt)checkTilt()}
+  var motionBound=false;
+  function enableMotion(){
+    return new Promise(function(resolve){
+      if(typeof DeviceMotionEvent==="undefined"){resolve("none");return}
+      function bind(){
+        if(!motionBound){window.addEventListener("devicemotion",onMotion);motionBound=true}
+        var tries=0;(function wait(){if(S.gotMotion){resolve("ok");return}if(++tries>12){resolve("silent");return}setTimeout(wait,100)})();
+      }
+      try{
+        if(typeof DeviceMotionEvent.requestPermission==="function"){
+          DeviceMotionEvent.requestPermission().then(function(r){if(r==="granted")bind();else resolve("denied")}).catch(function(){resolve("denied")});
+        }else bind();
+      }catch(e){resolve("denied")}
+    });
+  }
+  function checkTilt(){
+    if(!S.armed||S.flash||!S.sign)return;
+    var d=(S.z-S.neutral)*S.sign/9.81;
+    if(performance.now()<S.armAt)return;
+    if(d>0.5)answer(true);
+    else if(d<-0.5)answer(false);
+  }
+  function rearmWatch(){
+    // after an answer, require the iPad to come back near upright before the next tilt counts
+    S.armed=false;
+    (function wait(){
+      if(S.phase!=="play")return;
+      var d=(S.z-S.neutral)*S.sign/9.81;
+      if(!S.tilt||Math.abs(d)<0.25){S.armed=true;S.armAt=performance.now()+150;return}
+      setTimeout(wait,80);
+    })();
+  }
 
-            // If the iPad returns to the upright position, reset the lock so they can guess again
-            if (isNormalZone) {
-                waitingForReset = false;
-                if (!isProcessingTilt) {
-                    document.body.style.backgroundColor = '#3498db'; // Return to blue
-                }
-            }
+  var calibTimer=0;
+  function runCalibration(after){
+    show("calib");
+    $("calibLine").textContent="Hold the iPad upright, like on your forehead.";
+    $("calibSub").textContent="Keep it still for a moment.";
+    var samples=[],t0=performance.now(),base=null,hold=0,done=false,timeout=performance.now()+25000;
+    clearInterval(calibTimer);
+    calibTimer=setInterval(function(){
+      if(done)return;
+      var now=performance.now();
+      if(now>timeout){finish(false);return}
+      if(base===null){
+        if(now-t0<1200){samples.push(S.z);return}
+        base=samples.reduce(function(a,b){return a+b},0)/Math.max(1,samples.length);
+        $("calibLine").textContent="Now tilt the screen down toward the floor.";
+        $("calibSub").textContent="Like saying yes, I got it. Hold it there.";
+        return;
+      }
+      var d=S.z-base;
+      if(Math.abs(d)>5){hold+=1;if(hold>5){S.sign=d>0?1:-1;lsSet("chayen.sign",String(S.sign));$("calibLine").textContent="Got it.";$("calibSub").textContent="Tilt up will skip.";sfx.ok();finish(true)}}else hold=0;
+    },100);
+    function finish(okk){done=true;clearInterval(calibTimer);setTimeout(function(){if(okk)after();else{S.tilt=false;toast("Tilt setup timed out. Taps only.");after()}},okk?900:0)}
+    $("calibCancel").onclick=function(){done=true;clearInterval(calibTimer);S.tilt=false;after()};
+  }
 
-            // Do nothing if we are in the middle of a 1.2s animation OR if the player hasn't returned the iPad upright yet
-            if (isProcessingTilt || waitingForReset) return;
+  /* ---------- game flow ---------- */
+  function fitWord(){
+    var w=$("word"),st=$("stage");
+    var maxW=st.clientWidth*0.94,maxH=st.clientHeight*0.8;
+    var size=Math.min(maxH,520);
+    w.style.fontSize=size+"px";
+    var guard=0;
+    while(w.offsetWidth>maxW&&size>14&&guard++<200){size=Math.max(14,size*0.93);w.style.fontSize=size+"px"}
+  }
+  function showWord(t,isMsg){var w=$("word");w.textContent=t;w.classList.toggle("msg",!!isMsg);fitWord()}
+  window.addEventListener("resize",function(){if(S.phase==="play")fitWord()});
 
-            // Trigger guesses only if we have a clean reset
-            if (isDown) {
-                handleCorrect();
-            } else if (isUp) {
-                handleSkip();
-            }
-        }
+  function setScore(){$("score").textContent=S.score}
+  function tint(cls){var p=$("play");p.classList.remove("good","skip");if(cls)p.classList.add(cls)}
 
-        function handleCorrect() {
-            if (isProcessingTilt) return;
-            isProcessingTilt = true;
-            waitingForReset = true; // Lock further guesses until iPad goes back to vertical
-            score++;
-            
-            document.body.style.backgroundColor = '#2ecc71';
-            document.getElementById('current-word').innerText = "CORRECT!";
-            
-            setTimeout(() => {
-                currentWordIndex++;
-                showNextWord();
-                isProcessingTilt = false;
-                // Note: The screen stays green until they bring it back to vertical, which provides good visual feedback
-            }, 1200);
-        }
+  function answer(correct){
+    if(S.phase!=="play"||S.flash||!S.cur||S.counting)return;
+    S.flash=true;S.armed=false;
+    if(correct){S.score++;S.ok.push(S.cur);sfx.ok();tint("good");showWord("Correct",true)}
+    else{S.no.push(S.cur);sfx.skip();tint("skip");showWord("Skip",true)}
+    setScore();
+    setTimeout(function(){
+      if(S.phase!=="play")return;
+      tint("");S.flash=false;
+      if(performance.now()>=S.end){finishRound();return}
+      nextWord();
+      if(S.tilt)rearmWatch();else S.armed=true;
+    },650);
+  }
 
-        function handleSkip() {
-            if (isProcessingTilt) return;
-            isProcessingTilt = true;
-            waitingForReset = true; // Lock further guesses until iPad goes back to vertical
-            
-            document.body.style.backgroundColor = '#e74c3c';
-            document.getElementById('current-word').innerText = "PASS";
-            
-            setTimeout(() => {
-                currentWordIndex++;
-                showNextWord();
-                isProcessingTilt = false;
-            }, 1200);
-        }
+  function startRound(){
+    S.words=parseWords();
+    if(!S.words.length){toast("Add at least one word first");show("home");return}
+    S.deck=[];S.cur="";S.score=0;S.ok=[];S.no=[];S.flash=false;S.armed=false;S.counting=true;
+    setScore();$("time").textContent=S.seconds;$("barFill").style.transform="scaleX(1)";
+    tint("");show("play");
+    try{if(navigator.wakeLock)navigator.wakeLock.request("screen").catch(function(){})}catch(e){}
+    var seq=["Forehead!","3","2","1"],i=0;S.nSamples=[];
+    var sampler=setInterval(function(){if(S.phase!=="play"){clearInterval(sampler);return}if(i>=2)S.nSamples.push(S.z)},60);
+    (function step(){
+      if(S.phase!=="play"){clearInterval(sampler);return}
+      if(i<seq.length){showWord(seq[i],true);if(i>0)sfx.tick();i++;setTimeout(step,1000);return}
+      clearInterval(sampler);
+      if(S.tilt&&S.nSamples.length)S.neutral=S.nSamples.reduce(function(x,y){return x+y},0)/S.nSamples.length;
+      S.counting=false;sfx.go();
+      S.end=performance.now()+S.seconds*1000;
+      nextWord();
+      if(S.tilt)rearmWatch();else S.armed=true;
+      tickTimer();
+    })();
+  }
+  function tickTimer(){
+    clearInterval(S.timerId);
+    S.timerId=setInterval(function(){
+      if(S.phase!=="play"){clearInterval(S.timerId);return}
+      var left=Math.max(0,S.end-performance.now());
+      $("time").textContent=Math.ceil(left/1000);
+      $("barFill").style.transform="scaleX("+(left/(S.seconds*1000))+")";
+      if(left<=0){clearInterval(S.timerId);if(!S.flash)finishRound()}
+    },100);
+  }
+  function finishRound(){
+    clearInterval(S.timerId);S.armed=false;S.flash=false;sfx.end();tint("");
+    $("finalScore").textContent=S.score;
+    $("finalSub").textContent=S.score===0?"No words this round. Try again.":(S.score===1?"1 word guessed":S.score+" words guessed")+(S.no.length?", "+S.no.length+" skipped.":".");
+    fill($("okList"),S.ok,"None yet");fill($("noList"),S.no,"None");
+    show("results");
+  }
+  function fill(ul,arr,empty){ul.innerHTML="";(arr.length?arr:[empty]).forEach(function(t){var li=document.createElement("li");li.textContent=t;ul.appendChild(li)})}
 
-        function endGame() {
-            clearInterval(timerInterval);
-            document.getElementById('game-screen').style.display = 'none';
-            document.getElementById('end-screen').style.display = 'flex';
-            document.body.style.backgroundColor = '#2c3e50';
-            document.getElementById('final-score').innerText = `Score: ${score}`;
-            window.removeEventListener('deviceorientation', handleOrientation);
-        }
+  /* ---------- wiring ---------- */
+  $("startTap").onclick=function(){audio();S.tilt=false;startRound()};
+  $("startTilt").onclick=function(){
+    audio();
+    $("motionStatus").textContent="Checking motion sensors…";
+    enableMotion().then(function(r){
+      if(r==="ok"){
+        S.tilt=true;$("motionStatus").textContent="";
+        if(S.sign)startRound();else runCalibration(function(){startRound()});
+      }else{
+        S.tilt=false;
+        $("motionStatus").textContent=r==="denied"?"Motion access was declined. Reload and allow it, or use taps only.":"No motion data from this device or page. This happens in some embedded viewers and on desktop. Open the downloaded file in Safari over https, or use taps only.";
+      }
+    });
+  };
+  $("recal").onclick=function(){
+    audio();
+    enableMotion().then(function(r){
+      if(r==="ok"){S.tilt=true;runCalibration(function(){show("home");toast(S.sign?"Tilt direction saved":"Tilt setup skipped")})}
+      else $("motionStatus").textContent="No motion data available here, so tilt cannot be set up.";
+    });
+  };
+  $("tapOk").onclick=function(){answer(true)};
+  $("tapSkip").onclick=function(){answer(false)};
+  $("quit").onclick=function(){if(S.counting){clearInterval(S.timerId);S.phase="home";show("home");return}finishRound()};
+  $("again").onclick=function(){audio();startRound()};
+  $("toHome").onclick=function(){show("home")};
 
-        function resetGame() {
-            document.getElementById('end-screen').style.display = 'none';
-            document.getElementById('start-screen').style.display = 'flex';
-        }
-    </script>
-</body>
-</html>
+  /* ---------- download (only inside the Claude viewer) ---------- */
+  (function(){
+    try{
+      if(!window.claude||!window.claude.use)return;
+      window.claude.use("downloads").then(function(dl){
+        if(!dl)return;
+        var b=$("dlBtn");b.hidden=false;
+        b.onclick=function(){
+          fetch("chayen-standalone.html").then(function(r){return r.text()}).then(function(t){return dl.save({filename:"chayen.html",data:t})}).then(function(){toast("Game file saved")}).catch(function(e){if(!e||e.code!=="declined")toast("Could not save the file")});
+        };
+      }).catch(function(){});
+    }catch(e){}
+  })();
+})();
+</script>
+
+</body></html>
+
+</body></html>
